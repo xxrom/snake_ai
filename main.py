@@ -1,14 +1,22 @@
-import pyglet
+import pygame
 
-class Window(pyglet.window.Window):
+pygame.init()
+gameDisplay = pygame.display.set_mode((800, 600))
+pygame.display.set_caption('A bit Racey')
+clock = pygame.time.Clock()
 
-  def __init__(self):
-    super(Window, self).__init__()
-    self.set_size(800, 800)
+crashed = False
+while not crashed:
+  for event in pygame.event.get():
+    if event.type == pygame.QUIT:
+      crashed = True
+
+    print(event)
+
+  pygame.display.update()
+  clock.tick(60)
+
+pygame.quit()
+quit()
 
 
-
-
-if __name__ == '__main__':
-  widnow = Window()
-  pyglet.app.run()
