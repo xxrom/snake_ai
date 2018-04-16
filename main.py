@@ -1,5 +1,7 @@
 import pygame
 import time
+import random
+import math
 
 pygame.init()
 
@@ -25,6 +27,12 @@ pressedKeys = {
 
 snake = {
   'x': 0,
+  'y': 0,
+  'length': 0
+}
+
+food = {
+  'x': 0,
   'y': 0
 }
 
@@ -33,9 +41,19 @@ headImg = pygame.image.load('car.png')
 gameDisplay = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
 
-def head(x, y):
+def init_food():
+  print(random.random())
+  food['x'] = math.floor(random.random() * (WIDTH / cellWidth)) * cellWidth
+  food['y'] = math.floor(random.random() * (HEIGHT / cellHeight)) * cellHeight
+  print(food)
+
+def draw_head(x, y):
   pygame.draw.rect(gameDisplay, green, (x, y, cellWidth, cellHeight))
   # gameDisplay.blit(headImg, (x, y))
+
+def draw_food(x, y):
+  pygame.draw.rect(gameDisplay, red, (x, y, cellWidth, cellHeight))
+
 
 def check(x, y):
   if (
@@ -103,18 +121,18 @@ def game_loop():
   # time.sleep(1)
   snake['x'] = (cellWidth * 5)
   snake['y'] = (cellHeight * 5)
+  snake['length'] = 0
 
   pressedKeys['left'] = 0
   pressedKeys['right'] = 0
   pressedKeys['up'] = 0
   pressedKeys['down'] = 0
 
-  # pygame.display.set_caption('A bit Racey')
+  pygame.display.set_caption('SNAKE AI')
 
   gameExit = False
-  x_change = 0
-
   startTime = millis()
+  init_food()
 
   while not gameExit:
     events()
@@ -122,19 +140,25 @@ def game_loop():
     if (millis() - startTime > IN_GAME_FPS):
       print('enter MOVE 500 =============================')
       startTime = millis()
+
       snake['x'] += pressedKeys['left'] + pressedKeys['right']
       snake['y'] += pressedKeys['up'] + pressedKeys['down']
 
 
-    gameDisplay.fill(white)
-    head(snake['x'], snake['y'])
-    draw_field()
+      if check(snake['x'], snake['y']):
+        crash()
+      else:
+        if (snake['x'] == food['x'] and snake['y'] == food['y']):
+          snake['length'] += snake['length']
+          init_food()
 
-    if check(snake['x'], snake['y']):
-      crash()
+    gameDisplay.fill(white)
+    draw_field()
+    draw_food(food['x'], food['y'])
+    draw_head(snake['x'], snake['y'])
 
     pygame.display.update()
-    clock.tick(60)
+    clock.tick(10)
 
 game_loop()
 pygame.quit()
