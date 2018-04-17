@@ -7,7 +7,7 @@ pygame.init()
 
 WIDTH = 800
 HEIGHT = 600
-FPS = 30
+FPS = 20
 IN_GAME_FPS = 1000 // FPS;
 
 cellWidth = 20
@@ -58,7 +58,7 @@ def draw_tail(tail):
     pygame.draw.rect(gameDisplay, (0, 255, 0), (i['x'], i['y'], cellWidth, cellHeight))
 
 def draw_food(x, y):
-  pygame.draw.rect(gameDisplay, red, (x, y, cellWidth, cellHeight))
+  pygame.draw.circle(gameDisplay, red, (x + (cellWidth // 2), y + (cellHeight // 2)), 10)
 
 
 def check(x, y):
@@ -154,27 +154,31 @@ def game_loop():
 
       # передвигаем весь хвост
       if (snake['x'] != prev_x or snake['y'] != prev_y):
-        snake['tail'].append({ 'x': prev_x, 'y': prev_y })
-        snake['tail'].pop(0)
-
+        snake['tail'].insert(0, { 'x': prev_x, 'y': prev_y })
+        snake['tail'].pop()
 
       if check(snake['x'], snake['y']):
         crash()
       else:
-        if (snake['x'] == food['x'] and snake['y'] == food['y']):
+        eatArea = cellWidth * 3
+        if (abs(snake['x'] - food['x']) <= eatArea
+          and abs(snake['y'] - food['y']) <= eatArea):
+          print(snake['tail'])
           if (snake['length'] == 0):
             snake['tail'].append({ 'x': prev_x, 'y': prev_y })
           else:
-            print('!= 0', len(snake['tail']))
-            print(snake['tail'])
-            print(snake['tail'][len(snake['tail']) - 1])
+            getTailPosition = len(snake['tail']) - 1
+            print('tail size', getTailPosition)
+            print('add item', snake['tail'][getTailPosition])
             snake['tail'].append({
-              'x': snake['tail'][0]['x'],
-              'y': snake['tail'][0]['y']
+              'x': snake['tail'][getTailPosition]['x'],
+              'y': snake['tail'][getTailPosition]['y']
             })
           snake['length'] += 1
           print(snake['tail'])
           init_food()
+
+
 
     gameDisplay.fill(white)
     draw_field()
