@@ -5,8 +5,8 @@ import math
 
 pygame.init()
 
-WIDTH = 800
-HEIGHT = 600
+WIDTH = 200
+HEIGHT = 200
 FPS = 20
 IN_GAME_FPS = 1000 // FPS;
 
@@ -53,9 +53,9 @@ def draw_head(x, y):
   # pygame.draw.circle(gameDisplay, (0, 200, 0), (x + (cellWidth // 2), y + (cellHeight // 2)), cellHeight // 2)
   # gameDisplay.blit(headImg, (x, y))
 
-def draw_tail(tail):
-  for i in tail:
-    pygame.draw.rect(gameDisplay, (0, 255, 0), (i['x'], i['y'], cellWidth, cellHeight))
+def draw_tail(tail, length):
+  for i in range(0, length):
+    pygame.draw.rect(gameDisplay, (0, 255, 0), (tail[i]['x'], tail[i]['y'], cellWidth, cellHeight))
 
 def draw_food(x, y):
   pygame.draw.circle(gameDisplay, red, (x + (cellWidth // 2), y + (cellHeight // 2)), 10)
@@ -76,12 +76,13 @@ def textObjects(text, font, color):
   return textSurface, textSurface.get_rect()
 
 def messageDisplay(text):
-  largeText = pygame.font.Font('freesansbold.ttf', 115)
+  largeText = pygame.font.Font('freesansbold.ttf', 80)
   TextSurf, TextRect = textObjects(text, largeText, black)
   TextRect.center = ((WIDTH / 2), (HEIGHT / 2))
   gameDisplay.blit(TextSurf, TextRect)
 
 def crash():
+  print('You Crashed!')
   messageDisplay('You Crashed!')
 
 def draw_field():
@@ -125,9 +126,10 @@ def events():
 def game_loop():
   print('game loop')
   # time.sleep(1)
-  snake['x'] = (cellWidth * 5)
-  snake['y'] = (cellHeight * 5)
+  snake['x'] = (cellWidth * 1)
+  snake['y'] = (cellHeight * 1)
   snake['length'] = 0
+  snake['tail'] = []
 
   pressedKeys['left'] = 0
   pressedKeys['right'] = 0
@@ -137,54 +139,60 @@ def game_loop():
   pygame.display.set_caption('SNAKE AI')
 
   gameExit = False
+  checkCrash = False
   startTime = millis()
   init_food()
 
   while not gameExit:
     events()
 
-    if (millis() - startTime > IN_GAME_FPS):
-      # print('enter MOVE 500 =============================')
-      startTime = millis()
+    if (millis() < startTime and checkCrash == True):
+      crash()
+      pygame.display.update()
+      clock.tick(FPS)
+      continue
+    elif (millis() > startTime and checkCrash == True):
+      game_loop()
 
-      prev_x = snake['x']
-      prev_y = snake['y']
-      snake['x'] += pressedKeys['left'] + pressedKeys['right']
-      snake['y'] += pressedKeys['up'] + pressedKeys['down']
+    prev_x = snake['x']
+    prev_y = snake['y']
+    snake['x'] += pressedKeys['left'] + pressedKeys['right']
+    snake['y'] += pressedKeys['up'] + pressedKeys['down']
 
-      # передвигаем весь хвост
-      if (snake['x'] != prev_x or snake['y'] != prev_y):
-        snake['tail'].insert(0, { 'x': prev_x, 'y': prev_y })
-        snake['tail'].pop()
+    # передвигаем весь хвост
+    if (snake['x'] != prev_x or snake['y'] != prev_y):
+      snake['tail'].insert(0, { 'x': prev_x, 'y': prev_y })
+      snake['tail'].pop()
 
-      if check(snake['x'], snake['y']):
-        crash()
-      else:
-        eatArea = cellWidth * 3
-        if (abs(snake['x'] - food['x']) <= eatArea
-          and abs(snake['y'] - food['y']) <= eatArea):
-          print(snake['tail'])
-          if (snake['length'] == 0):
-            snake['tail'].append({ 'x': prev_x, 'y': prev_y })
-          else:
-            getTailPosition = len(snake['tail']) - 1
-            print('tail size', getTailPosition)
-            print('add item', snake['tail'][getTailPosition])
-            snake['tail'].append({
-              'x': snake['tail'][getTailPosition]['x'],
-              'y': snake['tail'][getTailPosition]['y']
-            })
-          snake['length'] += 1
-          print(snake['tail'])
-          init_food()
+    checkCrash = check(snake['x'], snake['y'])
 
-
+    if checkCrash == False:
+      eatArea = cellWidth * 3
+      if (abs(snake['x'] - food['x']) <= eatArea
+        and abs(snake['y'] - food['y']) <= eatArea):
+        print(snake['tail'])
+        if (snake['length'] == 0):
+          snake['tail'].append({ 'x': prev_x, 'y': prev_y })
+        else:
+          getTailPosition = snake['length'] - 1
+          print('tail size', getTailPosition)
+          print('add item', snake['tail'][getTailPosition])
+          snake['tail'].append({
+            'x': snake['tail'][getTailPosition]['x'],
+            'y': snake['tail'][getTailPosition]['y']
+          })
+        snake['length'] += 1
+        print(snake['tail'])
+        init_food()
 
     gameDisplay.fill(white)
     draw_field()
-    draw_tail(snake['tail'])
+    draw_tail(snake['tail'], snake['length'])
     draw_food(food['x'], food['y'])
     draw_head(snake['x'], snake['y'])
+
+    if checkCrash == True:
+      startTime = millis() + 1000
 
     pygame.display.update()
     clock.tick(FPS)
