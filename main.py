@@ -3,6 +3,16 @@ import time
 import random
 import math
 
+# import numpy as np
+# import matplotlib.pyplot as plt
+# import pandas as pd
+# import keras
+# from keras.models import Sequential # init neural network
+# from keras.layers import Dense # for layers creations
+
+# Initialising the ANN
+# classifier = Sequential()
+
 pygame.init()
 
 FPS = 10
@@ -175,27 +185,27 @@ def crash_time_checking(checkCrash, startTime):
 def snake_moves():
   if (snake['direction'] == 'down'):
     if (pressedKeys['left'] != 0):
-      snake['direction'] = 'left'
-    if (pressedKeys['right'] != 0):
       snake['direction'] = 'right'
+    if (pressedKeys['right'] != 0):
+      snake['direction'] = 'left'
 
-  if (snake['direction'] == 'right'):
-    if (pressedKeys['up'] != 0):
+  elif (snake['direction'] == 'right'):
+    if (pressedKeys['left'] != 0):
       snake['direction'] = 'up'
-    if (pressedKeys['down'] != 0):
+    if (pressedKeys['right'] != 0):
       snake['direction'] = 'down'
 
-  if (snake['direction'] == 'up'):
+  elif (snake['direction'] == 'up'):
     if (pressedKeys['left'] != 0):
       snake['direction'] = 'left'
     if (pressedKeys['right'] != 0):
       snake['direction'] = 'right'
 
-  if (snake['direction'] == 'left'):
-    if (pressedKeys['up'] != 0):
-      snake['direction'] = 'up'
-    if (pressedKeys['down'] != 0):
+  elif (snake['direction'] == 'left'):
+    if (pressedKeys['left'] != 0):
       snake['direction'] = 'down'
+    if (pressedKeys['right'] != 0):
+      snake['direction'] = 'up'
 
   if (snake['direction'] == 'down'):
     snake['y'] += CELL_HEIGHT
@@ -209,9 +219,56 @@ def snake_moves():
   # snake['x'] += pressedKeys['left'] + pressedKeys['right']
   # snake['y'] += pressedKeys['up'] + pressedKeys['down']
 
-def draw_info(snake, food):
-  distance = math.sqrt((snake['x'] - food['x'])**2 + (snake['y'] - food['y'])**2) # расстояние в пикселях
-  messageDisplay(str(int(distance)), 20, CELL_WIDTH, CELL_HEIGHT)
+def draw_info(snake, food, distanceToFood, distanceToWall):
+  distanceToFood = math.sqrt((snake['x'] - food['x'])**2 + (snake['y'] - food['y'])**2) // CELL_HEIGHT # расстояние в пикселях
+  if (snake['direction'] == 'down'):
+    distanceToWall = HEIGHT - snake['y'] - CELL_HEIGHT
+  if (snake['direction'] == 'right'):
+    distanceToWall = WIDTH - snake['x'] - CELL_WIDTH
+  if (snake['direction'] == 'up'):
+    distanceToWall = snake['y']
+  if (snake['direction'] == 'left'):
+    distanceToWall = snake['x']
+  distanceToWall //= CELL_WIDTH
+  messageDisplay('food ' + str(int(distanceToFood)), 20, 60, 20)
+  messageDisplay('wall ' + str(int(distanceToWall)), 20, 60, 40)
+
+# def init_ann():
+#   # Initialising the ANN
+#   classifier = Sequential()
+
+#   # Adding the input layer and the first hidden layer
+#   classifier.add(Dense(
+#     6, # количество нейронов в скрытом слое/ не артист= (inputs + outpust)/2
+#     input_dim = 11, # количество входов в нейронку (только в первом слое)
+#     kernel_initializer = 'random_uniform', # инициализация весов начальная близи 0
+#     activation = 'relu' # функция активации будет _/ , хорошо в скрытом слое
+#   ))
+
+#   # Adding the second hidden layer
+#   classifier.add(Dense(
+#     6, # количество нейронов в скрытом слое
+#     kernel_initializer = 'random_uniform', # инициализация весов начальная близи 0
+#     activation = 'relu' # функция активации будет _/ , хорошо в скрытом слое
+#   ))
+
+#   # Adding the output layer
+#   classifier.add(Dense(
+#     1, # количество котегорий на выходе (1 = 2, 3 = 3, n = n)
+#     kernel_initializer = 'random_uniform', # инициализация весов начальная близи 0
+#     activation = 'sigmoid' # функция активации будет сигмоида= получим % out
+#     # если на выходе больше 2 категорий, то нужно выбрать softmax функцию
+#   ))
+
+#   # Compilint the ANN градиентный спуск применяем
+#   classifier.compile(
+#     optimizer = 'adam', # метод оптимизации
+#     loss = 'binary_crossentropy', # cadecorical_crossentropy >2
+#     metrics = ['accuracy'] # метод измерения качества модели
+#   )
+
+# def ann():
+
 
 def game_loop():
   print('game loop')
@@ -221,6 +278,9 @@ def game_loop():
   pressedKeys['right'] = 0
   pressedKeys['up'] = 0
   pressedKeys['down'] = 0
+
+  distanceToFood = 0
+  distanceToWall = 0
 
   pygame.display.set_caption('SNAKE AI')
 
@@ -253,11 +313,13 @@ def game_loop():
     draw_food(food['x'], food['y'])
     draw_head(snake)
 
-    draw_info(snake, food)
+    draw_info(snake, food, distanceToFood, distanceToWall)
 
     if checkCrash == True:
       startTime = millis() + 1000 # 1 сек отображаем надпись врезались и перезпускам все
 
+    print('distance to the food', distanceToFood)
+    print('distance to the wall', distanceToWall)
     pygame.display.update()
     clock.tick(FPS)
 
