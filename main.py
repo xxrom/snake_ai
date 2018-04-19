@@ -50,6 +50,9 @@ food = {
   'y': 0
 }
 
+distanceToFood = 0
+distanceToWall = 0
+
 # headImg = pygame.image.load('car.png')
 
 gameDisplay = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -219,7 +222,7 @@ def snake_moves():
   # snake['x'] += pressedKeys['left'] + pressedKeys['right']
   # snake['y'] += pressedKeys['up'] + pressedKeys['down']
 
-def draw_info(snake, food, distanceToFood, distanceToWall):
+def draw_info(snake, food):
   distanceToFood = math.sqrt((snake['x'] - food['x'])**2 + (snake['y'] - food['y'])**2) // CELL_HEIGHT # расстояние в пикселях
   if (snake['direction'] == 'down'):
     distanceToWall = HEIGHT - snake['y'] - CELL_HEIGHT
@@ -232,6 +235,7 @@ def draw_info(snake, food, distanceToFood, distanceToWall):
   distanceToWall //= CELL_WIDTH
   messageDisplay('food ' + str(int(distanceToFood)), 20, 60, 20)
   messageDisplay('wall ' + str(int(distanceToWall)), 20, 60, 40)
+  return distanceToFood, distanceToWall
 
 # def init_ann():
 #   # Initialising the ANN
@@ -279,9 +283,6 @@ def game_loop():
   pressedKeys['up'] = 0
   pressedKeys['down'] = 0
 
-  distanceToFood = 0
-  distanceToWall = 0
-
   pygame.display.set_caption('SNAKE AI')
 
   gameExit = False
@@ -290,6 +291,7 @@ def game_loop():
   init_food()
 
   while not gameExit:
+    global distanceToFood, distanceToWall
     events()
     if (crash_time_checking(checkCrash, startTime) == True):
       continue
@@ -313,13 +315,13 @@ def game_loop():
     draw_food(food['x'], food['y'])
     draw_head(snake)
 
-    draw_info(snake, food, distanceToFood, distanceToWall)
+    distanceToFood, distanceToWall = draw_info(snake, food)
 
     if checkCrash == True:
       startTime = millis() + 1000 # 1 сек отображаем надпись врезались и перезпускам все
 
-    print('distance to the food', distanceToFood)
-    print('distance to the wall', distanceToWall)
+    print('distance to the food ', distanceToFood)
+    print('distance to the wall ', distanceToWall)
     pygame.display.update()
     clock.tick(FPS)
 
