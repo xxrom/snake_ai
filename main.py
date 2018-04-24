@@ -10,10 +10,129 @@ import keras
 from keras.models import Sequential # init neural network
 from keras.layers import Dense # for layers creations
 
-# Initialising the ANN
-classifier = Sequential()
+class Snake:
+  def __init__(self, x, y):
+    self.x = x * CELL_WIDTH
+    self.y = y * CELL_HEIGHT
+    self.length = 0
+    self.tail = []
+    self.direction = 'down'
 
-pygame.init()
+  def respawn(self):
+    self.x = 2 * CELL_WIDTH
+    self.y = 2 * CELL_HEIGHT
+    self.length = 0
+    self.direction = 'down'
+
+  def __getitem__(self, item):
+    return getattr(self, item)
+
+  def moves(self, pressedKeys):
+    print('MOVESSSS left ',  pressedKeys['left'], ' right ', pressedKeys['right'])
+    if (self.direction == 'down'):
+      if (pressedKeys['left'] != 0):
+        self.direction = 'right'
+      if (pressedKeys['right'] != 0):
+        self.direction = 'left'
+
+    elif (self.direction == 'right'):
+      if (pressedKeys['left'] != 0):
+        self.direction = 'up'
+      if (pressedKeys['right'] != 0):
+        self.direction = 'down'
+
+    elif (self.direction == 'up'):
+      if (pressedKeys['left'] != 0):
+        self.direction = 'left'
+      if (pressedKeys['right'] != 0):
+        self.direction = 'right'
+
+    elif (self.direction == 'left'):
+      if (pressedKeys['left'] != 0):
+        self.direction = 'down'
+      if (pressedKeys['right'] != 0):
+        self.direction = 'up'
+
+    if (self.direction == 'down'):
+      self.y += CELL_HEIGHT
+    if (self.direction == 'up'):
+      self.y -= CELL_HEIGHT
+    if (self.direction == 'left'):
+      self.x -= CELL_WIDTH
+    if (self.direction == 'right'):
+      self.x += CELL_WIDTH
+
+    # snake.x += pressedKeys['left'] + pressedKeys['right']
+    # snake.y += pressedKeys['up'] + pressedKeys['down']
+
+  def draw_head(self):
+    pygame.draw.rect(gameDisplay, (0, 200, 10), (self.x, self.y, CELL_WIDTH, CELL_HEIGHT))
+
+    if (self.direction == 'down'):
+      pygame.draw.circle(gameDisplay, (200, 0, 0), (self.x + CELL_WIDTH // 2, self.y + CELL_HEIGHT), CELL_HEIGHT // 5)
+    if (self.direction == 'right'):
+      pygame.draw.circle(gameDisplay, (200, 0, 0), (self.x + CELL_WIDTH, self.y + CELL_HEIGHT // 2), CELL_HEIGHT // 5)
+    if (self.direction == 'up'):
+      pygame.draw.circle(gameDisplay, (200, 0, 0), (self.x + CELL_WIDTH // 2, self.y), CELL_HEIGHT // 5)
+    if (self.direction == 'left'):
+      pygame.draw.circle(gameDisplay, (200, 0, 0), (self.x, self.y + CELL_HEIGHT // 2), CELL_HEIGHT // 5)
+
+    # pygame.draw.circle(gameDisplay, (0, 200, 0), (x + (CELL_WIDTH // 2), y + (CELL_HEIGHT // 2)), CELL_HEIGHT // 2)
+    # gameDisplay.blit(headImg, (x, y))
+
+  def draw_tail(self):
+    for i in range(0, self.length):
+      pygame.draw.rect(
+        gameDisplay,
+        (0, 255, 0),
+        (self.tail[i]['x'],
+        self.tail[i]['y'],
+        CELL_WIDTH,
+        CELL_HEIGHT)
+      )
+
+class Game:
+  def __init__(self, width, height, cellWidth, cellHeight):
+    self.width = width
+    self.height = height
+    self.cellWidth = cellWidth
+    self.cellHeight = cellHeight
+    self.food = { 'x': 0, 'y': 0 }
+
+  def __getitem__(self, item):
+    return getattr(self, item)
+
+  def add_snake(self, snake):
+    self.snake = snake
+  def add_food(self, food):
+    self.food = food
+
+  def init_food(self):
+    self.food['x'] = math.floor(random.random() * (self.width / self.cellWidth)) * self.cellWidth
+    self.food['y'] = math.floor(random.random() * (self.height / self.cellHeight)) * self.cellHeight
+    self.distanceToFood = 0
+    self.distanceToWall = 0
+
+  def draw_food(self):
+    pygame.draw.circle(gameDisplay, red, (self.food['x'] + (self.cellWidth // 2), self.food['y'] + (self.cellHeight // 2)), self.cellHeight // 2)
+
+  def draw_info(self):
+    self.distanceToFood = calculate_distance(self.snake, self.food) # // CELL_HEIGHT # расстояние в пикселях
+    if (self.snake.direction == 'down'):
+      self.distanceToWall = HEIGHT - snake.y - CELL_HEIGHT
+    if (self.snake.direction == 'right'):
+      self.distanceToWall = WIDTH - snake.x - CELL_WIDTH
+    if (self.snake.direction == 'up'):
+      self.distanceToWall = snake.y
+    if (self.snake.direction == 'left'):
+      self.distanceToWall = snake.x
+    # distanceToWall //= CELL_WIDTH
+
+    messageDisplay('food ' + str(int(self.distanceToFood)), 20, 60, 20)
+    messageDisplay('wall ' + str(int(self.distanceToWall)), 20, 60, 40)
+    messageDisplay('fps ' + str(int(FPS)), 20, 60, 60)
+
+    return self.distanceToFood, self.distanceToWall
 
 FPS = 8
 IN_GAME_FPS = 1000 // FPS;
@@ -33,65 +152,22 @@ green = (0, 255, 0)
 blue = (0, 0, 255)
 pressedKeys = {
   'left': 0,
-  'rigth': 0,
+  'right': 0,
   'up': 0,
   'down': 0
 }
 
-snake = {
-  'x': 0,
-  'y': 0,
-  'length': 0,
-  'tail': []
-}
+# Initializing the ANN
+classifier = Sequential()
 
-food = {
-  'x': 0,
-  'y': 0
-}
-
-distanceToFood = 0
-distanceToWall = 0
-
-# headImg = pygame.image.load('car.png')
-
+pygame.init()
 gameDisplay = pygame.display.set_mode((WIDTH, HEIGHT))
+
+snake = Snake(1, 1)
+game = Game(WIDTH, HEIGHT, CELL_WIDTH, CELL_HEIGHT)
+game.add_snake(snake)
+
 clock = pygame.time.Clock()
-
-def init_food():
-  print(random.random())
-  food['x'] = math.floor(random.random() * (WIDTH / CELL_WIDTH)) * CELL_WIDTH
-  food['y'] = math.floor(random.random() * (HEIGHT / CELL_HEIGHT)) * CELL_HEIGHT
-  print(food)
-
-def init_snake(snakeObj):
-  snakeObj['x'] = (CELL_WIDTH * 15)
-  snakeObj['y'] = (CELL_HEIGHT * 15)
-  snakeObj['length'] = 0
-  snakeObj['tail'] = []
-  snakeObj['direction'] = 'down'
-
-def draw_head(snake):
-  pygame.draw.rect(gameDisplay, (0, 200, 10), (snake['x'], snake['y'], CELL_WIDTH, CELL_HEIGHT))
-
-  if (snake['direction'] == 'down'):
-    pygame.draw.circle(gameDisplay, (200, 0, 0), (snake['x'] + CELL_WIDTH // 2, snake['y'] + CELL_HEIGHT), CELL_HEIGHT // 5)
-  if (snake['direction'] == 'right'):
-    pygame.draw.circle(gameDisplay, (200, 0, 0), (snake['x'] + CELL_WIDTH, snake['y'] + CELL_HEIGHT // 2), CELL_HEIGHT // 5)
-  if (snake['direction'] == 'up'):
-    pygame.draw.circle(gameDisplay, (200, 0, 0), (snake['x'] + CELL_WIDTH // 2, snake['y']), CELL_HEIGHT // 5)
-  if (snake['direction'] == 'left'):
-    pygame.draw.circle(gameDisplay, (200, 0, 0), (snake['x'], snake['y'] + CELL_HEIGHT // 2), CELL_HEIGHT // 5)
-
-  # pygame.draw.circle(gameDisplay, (0, 200, 0), (x + (CELL_WIDTH // 2), y + (CELL_HEIGHT // 2)), CELL_HEIGHT // 2)
-  # gameDisplay.blit(headImg, (x, y))
-
-def draw_tail(tail, length):
-  for i in range(0, length):
-    pygame.draw.rect(gameDisplay, (0, 255, 0), (tail[i]['x'], tail[i]['y'], CELL_WIDTH, CELL_HEIGHT))
-
-def draw_food(x, y):
-  pygame.draw.circle(gameDisplay, red, (x + (CELL_WIDTH // 2), y + (CELL_HEIGHT // 2)), 10)
 
 def check(x, y):
   if (
@@ -118,24 +194,25 @@ def crash():
   messageDisplay('You Crashed!', 50)
 
 def check_crash(checkCrash, prev_x, prev_y):
+  global game
   if checkCrash == False:
-    eatArea = CELL_WIDTH * SNAKE_EAT_AREA
-    if (abs(snake['x'] - food['x']) <= eatArea
-      and abs(snake['y'] - food['y']) <= eatArea):
-      # print(snake['tail'])
-      if (snake['length'] == 0):
-        snake['tail'].append({ 'x': prev_x, 'y': prev_y })
+    eatArea = game.cellWidth * SNAKE_EAT_AREA
+    if (abs(snake.x - game.food['x']) <= eatArea
+      and abs(snake.y - game.food['y']) <= eatArea):
+      # print(snake.tail)
+      if (snake.length == 0):
+        snake.tail.append({ 'x': prev_x, 'y': prev_y })
       else:
-        getTailPosition = snake['length'] - 1
+        getTailPosition = snake.length - 1
         # print('tail size', getTailPosition)
-        # print('add item', snake['tail'][getTailPosition])
-        snake['tail'].append({
-          'x': snake['tail'][getTailPosition]['x'],
-          'y': snake['tail'][getTailPosition]['y']
+        # print('add item', snake.tail[getTailPosition])
+        snake.tail.append({
+          'x': snake.tail[getTailPosition]['x'],
+          'y': snake.tail[getTailPosition]['y']
         })
-      snake['length'] += 1
-      # print(snake['tail'])
-      init_food()
+      snake.length += 1
+      # print(snake.tail)
+      game.init_food()
 
 def draw_field():
   for i in range(0, WIDTH // CELL_WIDTH):
@@ -143,7 +220,7 @@ def draw_field():
       pygame.draw.rect(gameDisplay, (230,230,230),
         (i * CELL_WIDTH, j * CELL_HEIGHT, CELL_WIDTH, CELL_HEIGHT), 1)
 
-def millis():
+def millisec():
   return int(round(time.time() * 1000))
 
 def events():
@@ -179,72 +256,17 @@ def events():
     # print(event)
 
 def crash_time_checking(checkCrash, startTime):
-  if (millis() < startTime and checkCrash == True):
+  if (millisec() < startTime and checkCrash == True):
     crash()
     pygame.display.update()
     clock.tick(FPS)
     return True
-  elif (millis() > startTime and checkCrash == True):
+  elif (millisec() > startTime and checkCrash == True):
     game_loop()
     return False
 
-def snake_moves():
-  print('MOVESSSS left ',  pressedKeys['left'], ' right ', pressedKeys['right'])
-  if (snake['direction'] == 'down'):
-    if (pressedKeys['left'] != 0):
-      snake['direction'] = 'right'
-    if (pressedKeys['right'] != 0):
-      snake['direction'] = 'left'
-
-  elif (snake['direction'] == 'right'):
-    if (pressedKeys['left'] != 0):
-      snake['direction'] = 'up'
-    if (pressedKeys['right'] != 0):
-      snake['direction'] = 'down'
-
-  elif (snake['direction'] == 'up'):
-    if (pressedKeys['left'] != 0):
-      snake['direction'] = 'left'
-    if (pressedKeys['right'] != 0):
-      snake['direction'] = 'right'
-
-  elif (snake['direction'] == 'left'):
-    if (pressedKeys['left'] != 0):
-      snake['direction'] = 'down'
-    if (pressedKeys['right'] != 0):
-      snake['direction'] = 'up'
-
-  if (snake['direction'] == 'down'):
-    snake['y'] += CELL_HEIGHT
-  if (snake['direction'] == 'up'):
-    snake['y'] -= CELL_HEIGHT
-  if (snake['direction'] == 'left'):
-    snake['x'] -= CELL_WIDTH
-  if (snake['direction'] == 'right'):
-    snake['x'] += CELL_WIDTH
-
-  # snake['x'] += pressedKeys['left'] + pressedKeys['right']
-  # snake['y'] += pressedKeys['up'] + pressedKeys['down']
-
 def calculate_distance(a, b):
   return math.sqrt((a['x'] - b['x'])**2 + (a['y'] - b['y'])**2)
-def draw_info(snake, food):
-  distanceToFood = calculate_distance(snake, food) # // CELL_HEIGHT # расстояние в пикселях
-  if (snake['direction'] == 'down'):
-    distanceToWall = HEIGHT - snake['y'] - CELL_HEIGHT
-  if (snake['direction'] == 'right'):
-    distanceToWall = WIDTH - snake['x'] - CELL_WIDTH
-  if (snake['direction'] == 'up'):
-    distanceToWall = snake['y']
-  if (snake['direction'] == 'left'):
-    distanceToWall = snake['x']
-  # distanceToWall //= CELL_WIDTH
-
-  messageDisplay('food ' + str(int(distanceToFood)), 20, 60, 20)
-  messageDisplay('wall ' + str(int(distanceToWall)), 20, 60, 40)
-  messageDisplay('fps ' + str(int(FPS)), 20, 60, 60)
-
-  return distanceToFood, distanceToWall
 
 def init_ann():
   global classifier
@@ -336,8 +358,6 @@ def ann(X_train, y_train, X_pred):
 
 def game_loop():
   print('game loop')
-  init_snake(snake)
-
   pressedKeys['left'] = 0
   pressedKeys['right'] = 0
   pressedKeys['up'] = 0
@@ -347,9 +367,9 @@ def game_loop():
 
   gameExit = False
   checkCrash = False
-  startTime = millis()
-  init_food()
-
+  startTime = millisec()
+  game.init_food()
+  snake.respawn()
 
 
   while not gameExit:
@@ -359,33 +379,33 @@ def game_loop():
     if (crash_time_checking(checkCrash, startTime) == True):
       continue
 
-    prev_x = snake['x']
-    prev_y = snake['y']
+    prev_x = snake.x
+    prev_y = snake.y
 
-    snake_moves()
+    snake.moves(pressedKeys)
 
     # передвигаем весь хвост
-    if (snake['x'] != prev_x or snake['y'] != prev_y):
-      snake['tail'].insert(0, { 'x': prev_x, 'y': prev_y })
-      snake['tail'].pop()
+    if (snake.x != prev_x or snake.y != prev_y):
+      snake.tail.insert(0, { 'x': prev_x, 'y': prev_y })
+      snake.tail.pop()
 
-    checkCrash = check(snake['x'], snake['y'])
+    checkCrash = check(snake.x, snake.y)
     check_crash(checkCrash, prev_x, prev_y)
 
     gameDisplay.fill(white)
     draw_field()
-    draw_tail(snake['tail'], snake['length'])
-    draw_food(food['x'], food['y'])
-    draw_head(snake)
+    snake.draw_tail()
+    game.draw_food()
+    snake.draw_head()
 
-    oldDistanceToFood = distanceToFood
-    distanceToFood, distanceToWall = draw_info(snake, food)
+    oldDistanceToFood = game.distanceToFood
+    distanceToFood, distanceToWall = game.draw_info()
     print(oldDistanceToFood - distanceToFood)
     X_pred = [
-      int(snake['direction'] == 'down'),
-      int(snake['direction'] == 'right'),
-      int(snake['direction'] == 'up'),
-      int(snake['direction'] == 'left'),
+      int(snake.direction == 'down'),
+      int(snake.direction == 'right'),
+      int(snake.direction == 'up'),
+      int(snake.direction == 'left'),
       int(oldDistanceToFood - distanceToFood)
     ]
     print('X_pred', X_pred)
@@ -396,7 +416,7 @@ def game_loop():
     pressedKeys['right'] = int(y_pred[0][1] > 0.5)
 
     if checkCrash == True:
-      startTime = millis() + 1000 # 1 сек отображаем надпись врезались и перезпускам все
+      startTime = millisec() + 1000 # 1 сек отображаем надпись врезались и перезапускаем все
 
     pygame.display.update()
     clock.tick(FPS)
