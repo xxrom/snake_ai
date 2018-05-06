@@ -28,7 +28,7 @@ class Snake:
     return getattr(self, item)
 
   def moves(self, pressedKeys):
-    print('MOVESSSS left ',  pressedKeys['left'], ' right ', pressedKeys['right'])
+    # print('MOVESSSS left ',  pressedKeys['left'], ' right ', pressedKeys['right'])
     if (self.direction == 'down'):
       if (pressedKeys['left'] != 0):
         self.direction = 'right'
@@ -92,12 +92,52 @@ class Snake:
       )
 
 class Game:
-  def __init__(self, width, height, cellWidth, cellHeight):
+  def __init__(self, width, height, cellWidth, cellHeight, FPS):
     self.width = width
     self.height = height
     self.cellWidth = cellWidth
     self.cellHeight = cellHeight
     self.food = { 'x': 0, 'y': 0 }
+    self.pressedKeys = {
+      'left': 0,
+      'right': 0,
+      'up': 0,
+      'down': 0
+    }
+    self.FPS = FPS
+
+    pygame.display.set_caption('SNAKE AI')
+
+  def events(self):
+    for event in pygame.event.get():
+      if event.type == pygame.QUIT:
+        pygame.quit()
+        quit()
+
+      keys = pygame.key.get_pressed()
+      if event.type == pygame.KEYDOWN:
+        if keys[pygame.K_LEFT]:
+          self.pressedKeys['left'] = -CELL_WIDTH
+        if keys[pygame.K_RIGHT]:
+          self.pressedKeys['right'] = CELL_WIDTH
+        if keys[pygame.K_i]:
+          # self.pressedKeys['up'] = -CELL_HEIGHT
+          self.FPS += 2
+        if keys[pygame.K_k]:
+          # self.pressedKeys['down'] = CELL_HEIGHT
+          self.FPS -= 2
+
+      if event.type == pygame.KEYUP:
+        if keys[pygame.K_LEFT] == 0:
+          self.pressedKeys['left'] = 0
+        if keys[pygame.K_RIGHT] == 0:
+          self.pressedKeys['right'] = 0
+        # if keys[pygame.K_UP] == 0:
+          # pressedKeys['up'] = 0
+        # if keys[pygame.K_DOWN] == 0:
+          # pressedKeys['down'] = 0
+
+      # print(event)
 
   def __getitem__(self, item):
     return getattr(self, item)
@@ -130,14 +170,14 @@ class Game:
 
     messageDisplay('food ' + str(int(self.distanceToFood)), 20, 60, 20)
     messageDisplay('wall ' + str(int(self.distanceToWall)), 20, 60, 40)
-    messageDisplay('fps ' + str(int(FPS)), 20, 60, 60)
+    messageDisplay('fps ' + str(int(self.FPS)), 20, 60, 60)
 
     return self.distanceToFood, self.distanceToWall
 
 FPS = 8
 IN_GAME_FPS = 1000 // FPS;
 
-SNAKE_EAT_AREA = 1 # расстояние в клеточках за которое будет кушать змея
+SNAKE_EAT_AREA = 0 # расстояние в клеточках за которое будет кушать змея
 
 CELL_WIDTH = 20
 CELL_HEIGHT = 20
@@ -150,12 +190,6 @@ white = (255, 255, 255)
 red = (255, 0, 0)
 green = (0, 255, 0)
 blue = (0, 0, 255)
-pressedKeys = {
-  'left': 0,
-  'right': 0,
-  'up': 0,
-  'down': 0
-}
 
 # Initializing the ANN
 classifier = Sequential()
@@ -164,7 +198,7 @@ pygame.init()
 gameDisplay = pygame.display.set_mode((WIDTH, HEIGHT))
 
 snake = Snake(1, 1)
-game = Game(WIDTH, HEIGHT, CELL_WIDTH, CELL_HEIGHT)
+game = Game(WIDTH, HEIGHT, CELL_WIDTH, CELL_HEIGHT, FPS)
 game.add_snake(snake)
 
 clock = pygame.time.Clock()
@@ -223,38 +257,6 @@ def draw_field():
 def millisec():
   return int(round(time.time() * 1000))
 
-def events():
-  global FPS
-  for event in pygame.event.get():
-    if event.type == pygame.QUIT:
-      pygame.quit()
-      quit()
-
-    keys = pygame.key.get_pressed()
-    if event.type == pygame.KEYDOWN:
-      if keys[pygame.K_LEFT]:
-        pressedKeys['left'] = -CELL_WIDTH
-      if keys[pygame.K_RIGHT]:
-        pressedKeys['right'] = CELL_WIDTH
-      if keys[pygame.K_i]:
-        # pressedKeys['up'] = -CELL_HEIGHT
-        FPS += 2
-      if keys[pygame.K_k]:
-        # pressedKeys['down'] = CELL_HEIGHT
-        FPS -= 2
-
-    if event.type == pygame.KEYUP:
-      if keys[pygame.K_LEFT] == 0:
-        pressedKeys['left'] = 0
-      if keys[pygame.K_RIGHT] == 0:
-        pressedKeys['right'] = 0
-      # if keys[pygame.K_UP] == 0:
-        # pressedKeys['up'] = 0
-      # if keys[pygame.K_DOWN] == 0:
-        # pressedKeys['down'] = 0
-
-    # print(event)
-
 def crash_time_checking(checkCrash, startTime):
   if (millisec() < startTime and checkCrash == True):
     crash()
@@ -299,13 +301,12 @@ def init_ann():
   # Compilint the ANN градиентный спуск применяем
   adam = keras.optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-8)
   classifier.compile(
-    # optimizer = 'adam', # метод оптимизации
     optimizer = adam, # метод оптимизации
     loss = 'categorical_crossentropy', # cadecorical_crossentropy >2
     metrics = ['accuracy'] # метод измерения качества модели
   )
 
-  X_pred = [ # down, right, up, left, distance to food
+  X_pred = [ # down, right, up, left, old - new => distance to food
     # [1, 0, 0, 0, 19], [ 1, 0, 0, 0, -19],
     [1, 0, 0, 0, 8], [ 1, 0, 0, 0, -8],
     # [1, 0, 0, 0, 1], [ 1, 0, 0, 0, -1],
@@ -343,7 +344,7 @@ def init_ann():
 
   classifier.fit(np.array(X_pred), np.array(y_test),
     batch_size = 1, # после скольких будет коррекция весов
-    nb_epoch = 1000 # количество эпох
+    nb_epoch = 50 # 1000 количество эпох
   )
 
 def ann(X_train, y_train, X_pred):
@@ -357,32 +358,23 @@ def ann(X_train, y_train, X_pred):
   print(y_pred)
 
 def game_loop():
-  print('game loop')
-  pressedKeys['left'] = 0
-  pressedKeys['right'] = 0
-  pressedKeys['up'] = 0
-  pressedKeys['down'] = 0
-
-  pygame.display.set_caption('SNAKE AI')
-
   gameExit = False
   checkCrash = False
   startTime = millisec()
   game.init_food()
   snake.respawn()
 
-
   while not gameExit:
     global distanceToFood, distanceToWall
 
-    events()
+    game.events()
     if (crash_time_checking(checkCrash, startTime) == True):
       continue
 
     prev_x = snake.x
     prev_y = snake.y
 
-    snake.moves(pressedKeys)
+    snake.moves(game.pressedKeys)
 
     # передвигаем весь хвост
     if (snake.x != prev_x or snake.y != prev_y):
@@ -408,18 +400,18 @@ def game_loop():
       int(snake.direction == 'left'),
       int(oldDistanceToFood - distanceToFood)
     ]
-    print('X_pred', X_pred)
+    # print('X_pred', X_pred)
     y_pred = classifier.predict(np.array([X_pred]))
     print(y_pred)
 
-    pressedKeys['left'] = int(y_pred[0][0] > 0.5)
-    pressedKeys['right'] = int(y_pred[0][1] > 0.5)
+    game.pressedKeys['left'] = int(y_pred[0][0] > 0.5)
+    game.pressedKeys['right'] = int(y_pred[0][1] > 0.5)
 
     if checkCrash == True:
       startTime = millisec() + 1000 # 1 сек отображаем надпись врезались и перезапускаем все
 
     pygame.display.update()
-    clock.tick(FPS)
+    clock.tick(game.FPS)
 
 # ANN
 init_ann()
