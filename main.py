@@ -158,21 +158,22 @@ class Game:
 
   def draw_info(self):
     self.distanceToFoodAhead = calculate_distance(self.snake, self.food) # // CELL_HEIGHT # расстояние в пикселях
-    distanceDown = HEIGHT - snake.y - CELL_HEIGHT
-    distanceRight = WIDTH - snake.x - CELL_WIDTH
-    distanceLeft = snake.x
-    distanceUp = snake.y
 
-    if snake.y < food.y:
+    distanceDown = HEIGHT - self.snake.y - CELL_HEIGHT
+    distanceRight = WIDTH - self.snake.x - CELL_WIDTH
+    distanceLeft = self.snake.x
+    distanceUp = self.snake.y
+
+    if self.snake.y < self.food['y']:
       foodDown = 1
-    elif snake.y > food.y:
+    elif self.snake.y > self.food['y']:
       foodDown = 0
     else:
       foodDown = 2
 
-    if snake.x < food.x:
+    if self.snake.x < self.food['x']:
       foodRight = 1
-    elif snake.x > food.x:
+    elif self.snake.x > self.food['x']:
       foodRight = 0
     else:
       foodRight = 2
@@ -186,9 +187,9 @@ class Game:
       self.wallLeft = distanceRight
       self.wallRight = distanceLeft
       self.foodDirection = 'left'
-      if snake.x == food.x and foodDown == 1:
+      if self.snake.x == self.food['x'] and foodDown == 1:
         self.haveFoodAhead = 1
-      if snake.y == food.y:
+      if self.snake.y == self.food['y']:
         if foodRight == 1:
           self.haveFoodLeft = 1
         else:
@@ -199,9 +200,9 @@ class Game:
       self.wallLeft = distanceUp
       self.wallRight = distanceDown
 
-      if snake.y == food.y and foodRight == 0:
+      if self.snake.y == self.food['y'] and foodRight == 0:
         self.haveFoodAhead = 1
-      if snake.x == food.x:
+      if self.snake.x == self.food['x']:
         if foodDown == 1:
           self.haveFoodRight = 1
         else:
@@ -212,9 +213,9 @@ class Game:
       self.wallLeft = distanceLeft
       self.wallRight = distanceRight
 
-      if snake.x == food.x and foodDown == 0:
+      if self.snake.x == self.food['x'] and foodDown == 0:
         self.haveFoodAhead = 1
-      if snake.y == food.y:
+      if self.snake.y == self.food['y']:
         if foodRight == 0:
           self.haveFoodLeft = 1
         else:
@@ -225,9 +226,9 @@ class Game:
       self.wallLeft = distanceDown
       self.wallRight = distanceUp
 
-      if snake.y == food.y and foodRight == 1:
+      if self.snake.y == self.food['y'] and foodRight == 1:
         self.haveFoodAhead = 1
-      if snake.x == food.x:
+      if self.snake.x == self.food['x']:
         if foodDown == 0:
           self.haveFoodRight = 1
         else:
@@ -236,9 +237,9 @@ class Game:
 
     messageDisplay('fps ' + str(int(self.FPS)), 20, 60, 20)
     messageDisplay('food ' + str(int(self.distanceToFood)), 20, 60, 40)
-    messageDisplay('ahead ' + str(int(self.distanceToFoodAhead)) + ' ' + self.haveFoodAhead, 20, 80, 60)
-    messageDisplay('left ' + str(int(self.distanceToFoodLeft)) + ' ' + self.haveFoodLeft, 20, 80, 80)
-    messageDisplay('right ' + str(int(self.distanceToFoodRight)) + ' ' + self.haveFoodRight, 20, 80, 100)
+    messageDisplay('ahead ' + str(int(self.wallAhead)) + ' ' + str(self.haveFoodAhead), 20, 80, 60)
+    messageDisplay('left ' + str(int(self.wallLeft)) + ' ' + str(self.haveFoodLeft), 20, 80, 80)
+    messageDisplay('right ' + str(int(self.wallRight)) + ' ' + str(self.haveFoodRight), 20, 80, 100)
 
 
     return self.distanceToFood, self.distanceToWall
