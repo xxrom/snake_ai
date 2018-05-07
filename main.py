@@ -157,20 +157,35 @@ class Game:
     pygame.draw.circle(gameDisplay, red, (self.food['x'] + (self.cellWidth // 2), self.food['y'] + (self.cellHeight // 2)), self.cellHeight // 2)
 
   def draw_info(self):
-    self.distanceToFood = calculate_distance(self.snake, self.food) # // CELL_HEIGHT # расстояние в пикселях
+    self.distanceToFoodAhead = calculate_distance(self.snake, self.food) # // CELL_HEIGHT # расстояние в пикселях
     if (self.snake.direction == 'down'):
-      self.distanceToWall = HEIGHT - snake.y - CELL_HEIGHT
-    if (self.snake.direction == 'right'):
-      self.distanceToWall = WIDTH - snake.x - CELL_WIDTH
-    if (self.snake.direction == 'up'):
-      self.distanceToWall = snake.y
-    if (self.snake.direction == 'left'):
-      self.distanceToWall = snake.x
-    # distanceToWall //= CELL_WIDTH
+      self.distanceToFoodAhead = HEIGHT - snake.y - CELL_HEIGHT
+      self.distanceToFoodLeft = WIDTH - snake.x - CELL_WIDTH
+      self.distanceToFoodRight = snake.x
+      self.foodDirection = 'left'
 
-    messageDisplay('food ' + str(int(self.distanceToFood)), 20, 60, 20)
-    messageDisplay('wall ' + str(int(self.distanceToWall)), 20, 60, 40)
-    messageDisplay('fps ' + str(int(self.FPS)), 20, 60, 60)
+    if (self.snake.direction == 'right'):
+      self.distanceToFoodAhead = WIDTH - snake.x - CELL_WIDTH
+      self.distanceToFoodLeft = snake.y
+      self.distanceToFoodRight = HEIGHT - snake.y - CELL_HEIGHT
+
+    if (self.snake.direction == 'up'):
+      self.distanceToFoodAhead = snake.y
+      self.distanceToFoodLeft = snake.x
+      self.distanceToFoodRight = WIDTH - snake.x - CELL_WIDTH
+
+    if (self.snake.direction == 'left'):
+      self.distanceToFoodAhead = snake.x
+      self.distanceToFoodLeft = HEIGHT - snake.y - CELL_HEIGHT
+      self.distanceToFoodRight = snake.y
+    # distanceToFoodAhead //= CELL_WIDTH
+
+    messageDisplay('fps ' + str(int(self.FPS)), 20, 60, 20)
+    messageDisplay('food ' + str(int(self.distanceToFood)), 20, 60, 40)
+    messageDisplay('ahead ' + str(int(self.distanceToFoodAhead)), 20, 80, 60)
+    messageDisplay('left ' + str(int(self.distanceToFoodLeft)), 20, 80, 80)
+    messageDisplay('right ' + str(int(self.distanceToFoodRight)), 20, 80, 100)
+
 
     return self.distanceToFood, self.distanceToWall
 
@@ -401,11 +416,10 @@ def game_loop():
       int(oldDistanceToFood - distanceToFood)
     ]
     # print('X_pred', X_pred)
-    y_pred = classifier.predict(np.array([X_pred]))
-    print(y_pred)
-
-    game.pressedKeys['left'] = int(y_pred[0][0] > 0.5)
-    game.pressedKeys['right'] = int(y_pred[0][1] > 0.5)
+    # y_pred = classifier.predict(np.array([X_pred]))
+    # print(y_pred)
+    # game.pressedKeys['left'] = int(y_pred[0][0] > 0.5)
+    # game.pressedKeys['right'] = int(y_pred[0][1] > 0.5)
 
     if checkCrash == True:
       startTime = millisec() + 1000 # 1 сек отображаем надпись врезались и перезапускаем все
@@ -414,7 +428,7 @@ def game_loop():
     clock.tick(game.FPS)
 
 # ANN
-init_ann()
+# init_ann()
 game_loop()
 pygame.quit()
 quit()
