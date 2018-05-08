@@ -347,15 +347,15 @@ def init_ann():
 
   # Adding the input layer and the first hidden layer
   classifier.add(Dense(
-    5, # количество нейронов в скрытом слое/ не артист= (inputs + outpust)/2
-    input_dim = 5, # количество входов в нейронку (только в первом слое)
+    10, # количество нейронов в скрытом слое/ не артист= (inputs + outpust)/2
+    input_dim = 8, # количество входов в нейронку (только в первом слое)
     kernel_initializer = 'random_uniform', # инициализация весов начальная близи 0
     activation = 'relu' # функция активации будет _/ , хорошо в скрытом слое
   ))
 
   # Adding the second hidden layer
   classifier.add(Dense(
-    3, # количество нейронов в скрытом слое
+    7, # количество нейронов в скрытом слое
     kernel_initializer = 'random_uniform', # инициализация весов начальная близи 0
     activation = 'relu' # функция активации будет _/ , хорошо в скрытом слое
   ))
@@ -376,45 +376,94 @@ def init_ann():
     metrics = ['accuracy'] # метод измерения качества модели
   )
 
-  X_pred = [ # down, right, up, left, old - new => distance to food
-    # [1, 0, 0, 0, 19], [ 1, 0, 0, 0, -19],
-    [1, 0, 0, 0, 8], [ 1, 0, 0, 0, -8],
-    # [1, 0, 0, 0, 1], [ 1, 0, 0, 0, -1],
+  X_pred = [
+    # down, right, up, left
+    # wall and haveFood => Ahead 0 / Left 1 / Right 0
+    # have food ahead, left, right , distance to wall ahead > 20 == True
 
-    # [0, 1, 0, 0, 19], [ 0, 1, 0, 0,  -19],
-    [0, 1, 0, 0, 8], [ 0, 1, 0, 0,  -8],
-    # [0, 1, 0, 0, 1], [ 0, 1, 0, 0,  -1],
+    [1, 0, 0, 0,
+      1, 0, 0, 1], # [ahead]
+      # 100, 1,  200, 0,  300, 0], # [ahead]
+    [ 1, 0, 0, 0,
+      0, 1, 0, 1], # [left]
+      # 20, 0,  500, 1,  300, 0], # [left]
+    [ 1, 0, 0, 0,
+      0, 0, 1, 1], # [right]
+      # 400, 0,  200, 0,  100, 1], # [right]
 
-    # [0, 0, 1, 0, 19], [ 0, 0, 1, 0, -19],
-    [0, 0, 1, 0, 8], [ 0, 0, 1, 0, -8],
-    # [0, 0, 1, 0, 1], [ 0, 0, 1, 0, -1],
+    [0, 1, 0, 0,
+      1, 0, 0, 1], # [ahead]
+      # 100, 1,  200, 0,  300, 0], # [ahead]
+    [0, 1, 0, 0,
+      0, 1, 0, 1], # [left]
+      # 20, 0,  500, 1,  300, 0], # [left]
+    [0, 1, 0, 0,
+      0, 0, 1, 1], # [right]
+      # 400, 0,  200, 0,  100, 1], # [right]
 
-    # [0, 0, 0, 1, 19], [ 0, 0, 0, 1,  -19],
-    [0, 0, 0, 1, 8], [ 0, 0, 0, 1,  -8],
-    # [0, 0, 0, 1, 1], [ 0, 0, 0, 1, -1],
+    [0, 0, 1, 0,
+      1, 0, 0, 1], # [ahead]
+      # 100, 1,  200, 0,  300, 0], # [ahead]
+    [0, 0, 1, 0,
+      0, 1, 0, 1], # [left]
+      # 20, 0,  500, 1,  300, 0], # [left]
+    [0, 0, 1, 0,
+      0, 0, 1, 1], # [right]
+      # 400, 0,  200, 0,  100, 1], # [right]
+
+    [0, 0, 0, 1,
+      1, 0, 0, 1], # [ahead]
+      # 100, 1,  200, 0,  300, 0], # [ahead]
+    [0, 0, 0, 1,
+      0, 1, 0, 1], # [left]
+      # 20, 0,  500, 1,  300, 0], # [left]
+    [0, 0, 0, 1,
+      0, 0, 1, 1], # [right]
+      # 400, 0,  200, 0,  100, 1], # [right]
+
+    # если пусто, то просто вперед
+    [1, 0, 0, 0,
+      0, 0, 0, 1],
+    [0, 1, 0, 0,
+      0, 0, 0, 1],
+    [0, 0, 1, 0,
+      0, 0, 0, 1],
+    [0, 0, 0, 1,
+      0, 0, 0, 1],
+
+    # если стена сразу, то поворот
+    [1, 0, 0, 0,
+      0, 0, 0, 0],
+    [0, 1, 0, 0,
+      0, 0, 0, 0],
+    [0, 0, 1, 0,
+      0, 0, 0, 0],
+    [0, 0, 0, 1,
+      0, 0, 0, 0]
   ]
 
   y_test = [ # left right ahead
-    # [0, 0, 1], [1, 0, 0],
-    [0, 0, 1], [1, 0, 0],
-    # [0, 0, 1], [1, 0, 0],
+    [0, 0, 1], [1, 0, 0], [0, 1, 0],
+    [0, 0, 1], [1, 0, 0], [0, 1, 0],
+    [0, 0, 1], [1, 0, 0], [0, 1, 0],
+    [0, 0, 1], [1, 0, 0], [0, 1, 0],
 
-    # [0, 0, 1], [1, 0, 0],
-    [0, 0, 1], [1, 0, 0],
-    # [0, 0, 1], [1, 0, 0],
+    # если пусто
+    [0, 0, 1],
+    [0, 0, 1],
+    [0, 0, 1],
+    [0, 0, 1],
 
-    # [0, 0, 1], [1, 0, 0],
-    [0, 0, 1], [1, 0, 0],
-    # [0, 0, 1], [0, 1, 0],
-
-    # [0, 0, 1], [0, 1, 0],
-    [0, 0, 1], [1, 0, 0],
-    # [0, 0, 1], [1, 0, 0],
+    # если стена
+    [0, 1, 0],
+    [0, 1, 0],
+    [0, 1, 0],
+    [0, 1, 0]
   ]
 
   classifier.fit(np.array(X_pred), np.array(y_test),
     batch_size = 1, # после скольких будет коррекция весов
-    nb_epoch = 50 # 1000 количество эпох
+    nb_epoch = 300 # 1000 количество эпох
   )
 
 def ann(X_train, y_train, X_pred):
@@ -460,21 +509,25 @@ def game_loop():
     game.draw_food()
     snake.draw_head()
 
-    oldDistanceToFood = game.distanceToFood
-    distanceToFood, distanceToWall = game.draw_info()
-    print(oldDistanceToFood - distanceToFood)
+    game.draw_info()
     X_pred = [
       int(snake.direction == 'down'),
       int(snake.direction == 'right'),
       int(snake.direction == 'up'),
       int(snake.direction == 'left'),
-      int(oldDistanceToFood - distanceToFood)
+      # int(game.wallAhead),
+      int(game.haveFoodAhead),
+      # int(game.wallLeft),
+      int(game.haveFoodLeft),
+      # int(game.wallRight),
+      int(game.haveFoodRight),
+      int(game.wallAhead > 10)
     ]
-    # print('X_pred', X_pred)
-    # y_pred = classifier.predict(np.array([X_pred]))
-    # print(y_pred)
-    # game.pressedKeys['left'] = int(y_pred[0][0] > 0.5)
-    # game.pressedKeys['right'] = int(y_pred[0][1] > 0.5)
+    print('X_pred', X_pred)
+    y_pred = classifier.predict(np.array([X_pred]))
+    print(y_pred)
+    game.pressedKeys['left'] = int(y_pred[0][0] > 0.5)
+    game.pressedKeys['right'] = int(y_pred[0][1] > 0.5)
 
     if checkCrash == True:
       startTime = millisec() + 1000 # 1 сек отображаем надпись врезались и перезапускаем все
@@ -483,7 +536,7 @@ def game_loop():
     clock.tick(game.FPS)
 
 # ANN
-# init_ann()
+init_ann()
 game_loop()
 pygame.quit()
 quit()
